@@ -118,7 +118,7 @@
             <input type="text" id="baseId" value="appG5NOoblUmtSMVI" disabled>
         </div>
         <div class="form-group">
-            <label for="tableName">Tabela (Ex: Artists)</label>
+            <label for="tableName">Tabela (Digite 'Artists' ou 'Músicas')</label>
             <input type="text" id="tableName" value="Artists">
         </div>
 
@@ -128,18 +128,30 @@
     </div>
 
     <script>
-        // Lista de campos que você quer zerar
-        const FIELDS_TO_RESET = [
-            "Promo_TV_Count",
-            "Promo_Radio_Count",
-            "Promo_Commercial_Count",
-            "Promo_Internet_Count",
-            "Remix_Count",
-            "MV_Count",
-            "Capas_Count",
-            "Parceria_Count",
-            "Streams" // <-- ADICIONADO AQUI
-        ];
+        // ==================================
+        // === INÍCIO DA CORREÇÃO ===
+        // ==================================
+        
+        // Mapeamento de tabelas para seus campos específicos
+        const TABLE_CONFIGS = {
+            'Artists': [
+                "Promo_TV_Count",
+                "Promo_Radio_Count",
+                "Promo_Commercial_Count",
+                "Promo_Internet_Count",
+                "Remix_Count",
+                "MV_Count",
+                "Capas_Count",
+                "Parceria_Count"
+            ],
+            'Músicas': [
+                "Streams"
+                // "Streams Totais" // Se quiser zerar os totais, adicione esta linha
+            ]
+        };
+        // ==================================
+        // === FIM DA CORREÇÃO ===
+        // ==================================
 
         // Elementos do DOM
         const button = document.getElementById('resetButton');
@@ -162,6 +174,25 @@
             const API_KEY = apiKeyInput.value.trim();
             const BASE_ID = baseIdInput.value.trim();
             const TABLE_NAME = tableNameInput.value.trim();
+            
+            // ==================================
+            // === INÍCIO DA CORREÇÃO ===
+            // ==================================
+            
+            // Pega a lista de campos CORRETA para a tabela digitada
+            const fieldsToReset = TABLE_CONFIGS[TABLE_NAME];
+
+            // Validação: Verifica se a tabela digitada está configurada
+            if (!fieldsToReset) {
+                log(`❌ ERRO: Tabela "${TABLE_NAME}" não está configurada.`);
+                log('Tabelas válidas: ' + Object.keys(TABLE_CONFIGS).join(', '));
+                button.disabled = false;
+                button.textContent = 'Zerar Contadores';
+                return;
+            }
+            // ==================================
+            // === FIM DA CORREÇÃO ===
+            // ==================================
 
             if (!API_KEY.startsWith('pat')) {
                 log('ERRO: Chave de API inválida. Ela deve começar com "pat".');
@@ -173,7 +204,9 @@
             try {
                 // 1. Buscar todos os registros que precisam ser atualizados
                 log('Passo 1: Buscando registros para zerar...');
-                const records = await fetchAllRecords(API_KEY, BASE_ID, TABLE_NAME);
+                
+                // Passa a lista de campos correta para a função
+                const records = await fetchAllRecords(API_KEY, BASE_ID, TABLE_NAME, fieldsToReset);
                 
                 if (records.length === 0) {
                     log('Nenhum registro com contadores maiores que 0 foi encontrado. Nada a fazer.');
@@ -186,7 +219,8 @@
 
                 // 2. Criar o payload de atualização (um objeto "fields" com tudo 0)
                 const resetFields = {};
-                FIELDS_TO_RESET.forEach(field => {
+                // Usa a lista de campos correta
+                fieldsToReset.forEach(field => {
                     resetFields[field] = 0;
                 });
                 
@@ -217,12 +251,14 @@
          * Busca todos os registros de uma tabela que correspondem a um filtro.
          * O filtro busca qualquer registro onde um dos contadores seja > 0.
          */
-        async function fetchAllRecords(apiKey, baseId, tableName) {
+        
+        // Adicionado 'fieldsToResetList' como argumento
+        async function fetchAllRecords(apiKey, baseId, tableName, fieldsToResetList) {
             let allRecords = [];
             let offset = null;
             
-            // Cria a fórmula do filtro: OR(Promo_TV_Count > 0, Promo_Radio_Count > 0, ...)
-            const filterFormula = "OR(" + FIELDS_TO_RESET.map(field => `{${field}} > 0`).join(', ') + ")";
+            // Usa 'fieldsToResetList' para criar a fórmula
+            const filterFormula = "OR(" + fieldsToResetList.map(field => `{${field}} > 0`).join(', ') + ")";
             const encodedFilter = encodeURIComponent(filterFormula);
 
             do {
