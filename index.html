@@ -122,7 +122,7 @@
             <input type="text" id="tableName" value="Artists">
         </div>
 
-        <button id="resetButton">Zerar Contadores de Promoção</button>
+        <button id="resetButton">Zerar Contadores</button>
 
         <pre id="log">Logs aparecerão aqui...</pre>
     </div>
@@ -137,7 +137,8 @@
             "Remix_Count",
             "MV_Count",
             "Capas_Count",
-            "Parceria_Count"
+            "Parceria_Count",
+            "Streams" // <-- ADICIONADO AQUI
         ];
 
         // Elementos do DOM
@@ -165,7 +166,7 @@
             if (!API_KEY.startsWith('pat')) {
                 log('ERRO: Chave de API inválida. Ela deve começar com "pat".');
                 button.disabled = false;
-                button.textContent = 'Zerar Contadores de Promoção';
+                button.textContent = 'Zerar Contadores';
                 return;
             }
             
@@ -177,7 +178,7 @@
                 if (records.length === 0) {
                     log('Nenhum registro com contadores maiores que 0 foi encontrado. Nada a fazer.');
                     button.disabled = false;
-                    button.textContent = 'Zerar Contadores de Promoção';
+                    button.textContent = 'Zerar Contadores';
                     return;
                 }
 
@@ -208,7 +209,7 @@
                 console.error(error);
             } finally {
                 button.disabled = false;
-                button.textContent = 'Zerar Contadores de Promoção';
+                button.textContent = 'Zerar Contadores';
             }
         }
 
